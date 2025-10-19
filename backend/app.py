@@ -34,7 +34,7 @@ if PROD_ORIGIN and PROD_ORIGIN not in ALLOWED_ORIGINS:
 CORS(
     app,
     supports_credentials=True,
-    resources={r"/*": {"origins": ALLOWED_ORIGINS}},
+    resources={r"/*": {"origins":"*"}},
     allow_headers=["Content-Type", "Authorization"],
     expose_headers=["Authorization"]
 )
