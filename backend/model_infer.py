@@ -43,6 +43,8 @@ FEATURES_IN_ORDER: List[str] = [
 
 _model = None
 
+print("Bla Bla Bla Bla Bla")
+
 def _load_pickle(path: str):
     with open(path, "rb") as f:
         return pickle.load(f)
