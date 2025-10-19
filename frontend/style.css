@@ -1,0 +1,616 @@
+/* ----------------- Google Font ----------------- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* ----------------- Global & Canvas ----------------- */
+
+html, body {
+  height: 100%;
+}
+
+
+html, body { 
+  height:100%; 
+  margin:0; 
+  background:#000; 
+  overflow:hidden; 
+  font-family: 'Poppins', sans-serif; 
+}
+canvas { display:block; }
+
+
+/* Ensure body can scroll */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background-color: #000;
+  color: #fff;
+  overflow-x: hidden;  /* prevent horizontal scroll */
+  overflow-y: auto;    /* allow vertical scroll */
+  min-height: 100vh;
+}
+
+/* Center container (search + title) */
+.center-container {
+  text-align: center;
+  margin-top: 5%;
+  padding: 1rem;
+}
+
+/* Dashboard container should allow scrolling if content is long */
+.dashboard-container {
+  display: none; /* initially hidden */
+  width: 80%;
+  max-width: 1000px;
+  margin: 2rem auto;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 1rem;
+  color: #fff;
+  overflow-y: auto;    /* enable vertical scroll */
+  max-height: 80vh;    /* prevent it from overflowing screen */
+}
+
+/* Tables: make scrollable horizontally if too wide */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  color: #fff;
+  overflow-x: auto;
+  display: block;
+}
+
+
+/* Gradient overlay for forms/pages */
+body::before {
+  content:'';
+  position: fixed;
+  top:0; left:0; width:100%; height:100%;
+  background: linear-gradient(120deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4));
+  z-index: 0;
+}
+
+/* ----------------- Top-right buttons ----------------- */
+
+h1 {
+  text-align: center;
+  margin-top: 8%;
+  font-size: 3em;
+  color: #ff4c4c;
+}
+
+
+.top-buttons {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+.top-buttons button {
+  margin-left: 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: 0.3s ease;
+  letter-spacing: 0.5px;
+}
+.login-btn { background:#333; color:#fff; }
+.login-btn:hover { background:#555; }
+.signup-btn { background:#007bff; color:#fff; }
+.signup-btn:hover { background:#00c6ff; }
+
+/* ----------------- Center container ----------------- */
+.center-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  text-align: center;
+  z-index: 10;
+  color: white;
+}
+
+/* Title (typewriter effect) */
+.title {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 30px;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 3px solid #fff;
+  width: 24ch; /* give extra room so last letters are not clipped */
+  animation: typing 2.4s steps(24, end) forwards, blink 0.8s infinite;
+  letter-spacing: 0.3px;
+  text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+}
+@keyframes typing { from { width: 0; } to { width: 24ch; } }
+@keyframes blink { 50% { border-color: transparent; } }
+@media (max-width: 768px) {
+  .title {
+    font-size: clamp(20px, 6vw, 28px);
+    width: 24.6ch;
+    padding-right: 0.8ch; /* space for caret so last letters stay visible */
+    border-right-width: 2px; /* thinner caret to avoid overlap */
+  }
+}
+
+@media (max-width: 600px) {
+  .center-container {
+    position: static;
+    transform: none;
+    margin: 100px 16px 0 16px; /* leave room for top buttons */
+    text-align: center;
+  }
+  .top-buttons button {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+}
+
+/* ----------------- Search bar ----------------- */
+.search-container {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background: rgba(255,255,255,0.08);
+  padding: 12px 20px;
+  border-radius: 50px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: 0.3s ease;
+  width: min(92vw, 560px);
+}
+.search-container input {
+  background:transparent;
+  border:2px solid rgba(255,255,255,0.3);
+  outline: none;
+  color:#fff;
+  font-size:16px;
+  width:100%;
+  padding:10px 15px;
+  border-radius: 25px;
+  transition: 0.3s ease, box-shadow 0.3s ease;
+}
+.search-container input:focus {
+  border:2px solid #00c6ff;
+  box-shadow: 0 0 10px #00c6ff;
+  background: rgba(255,255,255,0.1);
+}
+.search-container button {
+  background:#007bff;
+  border:0;
+  width:40px; height:40px;
+  border-radius:50%;
+  color:#fff; 
+  cursor:pointer;
+  font-size:0; /* avoid text overflow in circular button */
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  transition: 0.3s ease;
+}
+.search-container button:hover {
+  background: #00c6ff;
+  transform: scale(1.1);
+}
+.search-container button svg {
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+/* ----------------- Canvas positioning ----------------- */
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+/* Interactive feedback on search container */
+.search-container.success input { border-color: #00ff90; box-shadow: 0 0 10px rgba(0,255,144,0.6); }
+.search-container.error input { border-color: #ff6b6b; box-shadow: 0 0 10px rgba(255,107,107,0.6); }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+.search-container.shake { animation: shake 0.3s; }
+
+/* ----------------- Flash messages ----------------- */
+.flash-messages {
+  margin: 10px auto;
+  text-align: center;
+}
+.flash.success { color: #00ff90; font-weight: bold; }
+.flash.error { color: #ff6b6b; font-weight: bold; }
+
+/* ----------------- Forms ----------------- */
+.form-page {
+  max-width: 500px;
+  margin:auto;
+  padding: 45px 35px;
+  background: linear-gradient(135deg, #1f1c2c, #3a3a5c);
+  border-radius: 20px;
+  color: #fff;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+  position: relative;
+  z-index: 10;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.form-page:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+}
+
+.form-page h1 {
+  text-align: center;
+  margin-bottom: 35px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #e9e0e0;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+}
+
+.form-page label {
+  display:block;
+  margin: 15px 0 5px;
+  font-weight: 500;
+}
+
+.form-page input {
+  width: calc(100% - 40px); /* fits nicely inside the box */
+  padding: 14px 20px;
+  border-radius: 25px;
+  border: 2px solid rgba(255,255,255,0.3);
+  outline: none;
+  font-size: 16px;
+  background: rgba(255,255,255,0.05);
+  color: #ccc3c3; /* softer white for better readability */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.7); /* improves contrast */
+  transition: 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+}
+.form-page-input-cb {
+  width: 10px;
+  height: 10px;
+  margin: 0;
+}
+.form-page input:focus {
+  border: 2px solid #00c6ff;
+  box-shadow: 0 0 15px #00c6ff; /* keeps the highlight/glow */
+  background: rgba(255,255,255,0.1);
+  color: #fff; /* bright white when typing */
+}
+
+
+/* Submit button */
+.submit-btn {
+  margin-top: 30px;
+  padding: 14px;
+  width: 100%;
+  background: linear-gradient(45deg, #007bff, #00c6ff);
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  transition: 0.3s ease, transform 0.3s ease;
+}
+.submit-btn:hover {
+  background: linear-gradient(45deg, #00c6ff, #007bff);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+/* Error & success messages */
+.error-msg {
+  color: #ff6b6b;
+  font-size: 14px;
+  margin-top: 5px;
+}
+.success-msg {
+  color: #00ff90;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+/* Back link */
+.back-link {
+  display:block;
+  margin-bottom: 25px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.3s ease;
+}
+.back-link:hover {
+  color: #00c6ff;
+  text-decoration: underline;
+}
+
+
+.error-msg {
+  color: #ff6b6b;
+  font-size: 14px;
+  margin-top: 5px;
+  display: block;
+}
+
+input:invalid {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 10px #ff6b6b;
+}
+
+/* Background Gradient Animation */
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  background: linear-gradient(-45deg, #1a1a1a, #2d2d2d, #000000, #242424);
+  background-size: 400% 400%;
+  animation: gradientMove 10s ease infinite;
+  color: #f5f5f5;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Floating Warning Icons */
+.warning-icon {
+  position: absolute;
+  font-size: 40px;
+  color: #ff3333;
+  opacity: 0.2;
+  animation: float 8s infinite ease-in-out;
+}
+
+.warning-icon:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+.warning-icon:nth-child(2) { top: 50%; left: 80%; animation-delay: 2s; }
+.warning-icon:nth-child(3) { top: 70%; left: 30%; animation-delay: 4s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); opacity: 0.3; }
+  50% { transform: translateY(-20px); opacity: 0.7; }
+}
+
+/* Pulsating Radar Effect Behind Title */
+.radar {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background: rgba(255, 0, 0, 0.1);
+  transform: translate(-50%, -50%);
+  animation: pulse 3s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.4; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.1; }
+  100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.4; }
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 15px;
+  background: rgba(0,0,0,0.6);
+  font-size: 14px;
+  color: #ccc;
+}
+
+/* Landing page: keep footer at bottom above canvas */
+.landing footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2;
+}
+
+/* Prevent content from being hidden behind fixed footer on landing */
+.landing {
+  padding-bottom: 60px; /* approximate footer height */
+}
+
+/* Fix the header at top center */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.6); /* slightly transparent */
+  padding: 15px 0;
+  z-index: 1000;
+}
+
+header h1 {
+  font-size: 2.5em;
+  color: #ff4c4c;
+  margin: 0;
+}
+
+/* Push content down so it doesn't overlap header */
+main {
+  margin-top: 120px; /* height of header */
+  padding: 20px;
+}
+
+/* Malicious URL section scrolls normally */
+.malicious-section {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+  color: #fff;
+  line-height: 1.6;
+}
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #0d0d0d;
+  overflow-x: hidden;
+  min-height: 100vh;
+  color: #fff;
+}
+
+/* Animated Background */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: radial-gradient(circle, rgba(255,0,0,0.25) 10%, transparent 70%) repeat;
+  background-size: 150px 150px;
+  animation: pulse 3s infinite alternate;
+  z-index: -1;
+}
+
+@keyframes pulse {
+  from { transform: scale(1); opacity: 0.6; }
+  to   { transform: scale(1.1); opacity: 0.9; }
+}
+
+/* Floating Warning Icons */
+/* body::after {
+  content: "⚠ ⚠ ⚠ ⚠ ⚠";
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 4rem;
+  color: rgba(255, 200, 0, 0.2);
+  animation: float 6s infinite alternate;
+  pointer-events: none;
+} */
+
+@keyframes float {
+  from { transform: translateX(-50%) translateY(0); }
+  to   { transform: translateX(-50%) translateY(-20px); }
+}
+
+/* Header */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px 0;
+  z-index: 1000;
+}
+
+header h1 {
+  font-size: 2.5em;
+  color: #ff4c4c;
+  text-shadow: 0 0 10px #ff0000, 0 0 20px #ff4c4c;
+}
+
+/* Main Content */
+main {
+  margin-top: 120px; /* space for header */
+  padding: 20px;
+}
+
+.malicious-section {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.malicious-section h2 {
+  font-size: 2em;
+  margin-bottom: 20px;
+  color: #ffcc00;
+}
+
+/* URL Form */
+.url-form {
+  margin-top: 20px;
+}
+
+.url-form input {
+  padding: 12px;
+  width: 70%;
+  border: 2px solid #ff4c4c;
+  border-radius: 8px;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 1em;
+}
+
+.url-form button {
+  padding: 12px 20px;
+  margin-left: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #ff4c4c;
+  color: #fff;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.url-form button:hover {
+  background: #cc0000;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 15px 0;
+  background: rgba(0, 0, 0, 0.7);
+  position: relative;
+  margin-top: 50px;
+}
+
+.dashboard-card {
+  background: #1e1e2f;
+  color: #fff;
+  padding: 2rem;
+  margin: 2rem auto;
+  border-radius: 10px;
+  text-align: center;
+  width: 60%;
+  box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+}
+.dashboard-card h2 {
+  margin-bottom: 1rem;
+}
+button {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  background: #0078ff;
+  color: white;
+  cursor: pointer;
+}
+button:hover {
+  background: #005fcc;
+}

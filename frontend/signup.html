@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Additional styles for compact 2-column layout */
+    .form-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .form-row label {
+      flex: 1 1 45%; /* Each label/input takes ~45% width */
+      display: flex;
+      flex-direction: column;
+    }
+
+   .terms {
+  display: inline-flex;
+  align-items: center; /* Vertically center checkbox and text */
+  gap: 8px;            /* Space between box and text */
+  cursor: pointer;     /* Clicking text toggles checkbox */
+  margin-bottom: 15px;
+}
+
+.terms input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+
+    .g-recaptcha {
+      margin-bottom: 15px;
+    }
+
+    /* Responsive adjustment for mobile */
+    @media (max-width: 600px) {
+      .form-row label {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+  <div class="form-page">
+    <h1>Sign Up</h1>
+    <form id="signupForm">
+
+      <div class="form-row">
+        <label>Full Name
+          <input type="text" id="signupFullName" name="fullName" placeholder="Enter Full Name" required>
+          <span id="signupFullNameError" class="error-msg"></span>
+        </label>
+
+        <label>Username
+          <input type="text" id="signupUsername" name="username" placeholder="Enter Username" required>
+          <span id="signupUsernameError" class="error-msg"></span>
+        </label>
+      </div>
+
+      <div class="form-row">
+        <label>Email
+          <input type="email" id="signupEmail" name="email" placeholder="Enter Email" required>
+          <span id="signupEmailError" class="error-msg"></span>
+        </label>
+
+        
+      </div>
+
+      <div class="form-row">
+        <label>Password
+          <input type="password" id="signupPassword" name="password" placeholder="Enter Password" required>
+          <span id="signupPasswordError" class="error-msg"></span>
+        </label>
+
+        <label>Confirm Password
+          <input type="password" id="signupConfirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
+          <span id="signupConfirmPasswordError" class="error-msg"></span>
+        </label>
+      </div>
+
+      
+      <label class="terms">
+  <input type="checkbox" name="terms" required>
+  I agree to the <a href="#">Terms & Conditions</a>
+</label>
+
+
+
+      <button type="submit" class="submit-btn">Sign Up</button>
+      <div id="signupServerError" class="error-msg"></div>
+    </form>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

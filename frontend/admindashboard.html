@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f7f7f7; color:#333; }
+    header { text-align:center; padding:1rem; background:#0078ff; color:white; }
+    .tab-container { width:90%; max-width:1000px; margin:2rem auto; background:white; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); overflow:hidden; }
+    .tab-buttons { display:flex; justify-content:space-around; border-bottom:2px solid #ddd; background:#f1f1f1; }
+    .tab-buttons button { flex:1; padding:1rem; border:none; background:transparent; font-size:1rem; font-weight:bold; color:#555; cursor:pointer; transition:0.3s; }
+    .tab-buttons button:hover { background:#e0e0e0; }
+    .tab-buttons button.active { border-bottom:3px solid #0078ff; color:#0078ff; background:#fff; }
+    .tab-content { display:none; padding:2rem; text-align:center; animation:fadeIn 0.4s ease-in-out; }
+    .tab-content.active { display:block; }
+    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+    table { width:100%; border-collapse:collapse; margin-top:1rem; }
+    th, td { border:1px solid #ddd; padding:0.75rem; text-align:center; }
+    th { background:#0078ff; color:white; }
+    tr:nth-child(even) { background:#f9f9f9; }
+    .refresh-btn { background:#0078ff; color:white; border:none; padding:0.5rem 1rem; border-radius:5px; cursor:pointer; margin-top:10px; }
+    .refresh-btn:hover { background:#005ecc; }
+    button.action-btn { margin:0 2px; padding:3px 7px; border-radius:3px; border:none; cursor:pointer; }
+    button.update-btn { background-color:#28a745; color:white; }
+    button.delete-btn { background-color:#dc3545; color:white; }
+    /* Overview chart card */
+    #adminOverviewEmpty { color:#666; display:flex; align-items:center; justify-content:center; height: 40vh; }
+    #adminOverviewChartWrap { display:none; max-width: 560px; height: 320px; margin: 24px auto 0; background:#0f0f0f; border:1px solid #222; border-radius:12px; padding:12px; }
+    /* Override global canvas absolute positioning */
+    #adminOverviewChartWrap canvas { position: relative !important; width:100% !important; height:100% !important; top:auto !important; left:auto !important; display:block; }
+    @media (max-width: 900px) { #adminOverviewChartWrap { max-width: 90vw; height: 280px; } }
+  </style>
+</head>
+<body>
+  <header><h1>Admin Dashboard</h1></header>
+
+  <main>
+    <div class="tab-container">
+      <div class="tab-buttons">
+        <button class="tab-link active" onclick="openTab(event,'overview')">📊 Overview</button>
+        <button class="tab-link" onclick="openTab(event,'users')">👥 Manage Users</button>
+        <button class="tab-link" onclick="openTab(event,'queries')">🧾 User Queries</button>
+        <button class="tab-link" onclick="openTab(event,'settings')">⚙️ Settings</button>
+      </div>
+
+      <div id="overview" class="tab-content active">
+        <h2>📊 Overview</h2>
+        <p>System summary and quick statistics.</p>
+        <div id="adminOverviewEmpty">You haven't got any user queries yet</div>
+        <div id="adminOverviewChartWrap"><canvas id="adminOverviewPie"></canvas></div>
+      </div>
+
+      <div id="users" class="tab-content">
+        <h2>👥 Manage Users</h2>
+        <button class="refresh-btn" onclick="loadAllUsers()">🔄 Refresh Users</button>
+        <table id="usersTable">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="queries" class="tab-content">
+        <h2>🧾 User Queries</h2>
+        <button class="refresh-btn" onclick="loadAllQueries()">🔄 Refresh</button>
+        <table id="queriesTable">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Full Name</th>
+              <th>Website</th>
+              <th>Result</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="settings" class="tab-content">
+        <h2>⚙️ Settings</h2>
+        <p>Admin preferences and platform settings.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:5000'
+      : 'https://your-app-name.onrender.com';
+    function getAuthHeaders(){
+      const token = localStorage.getItem('token');
+      if(!token) return null;
+      return { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` };
+    }
+
+    function openTab(evt,tabId){
+      document.querySelectorAll(".tab-content").forEach(el=>el.classList.remove("active"));
+      document.querySelectorAll(".tab-link").forEach(btn=>btn.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      evt.currentTarget.classList.add("active");
+      if(tabId==="queries") loadAllQueries();
+      if(tabId==="users") loadAllUsers();
+      if(tabId==="overview") loadAdminOverview();
+    }
+
+    // ------- Admin Overview Pie ------- //
+    let adminOverviewChart = null;
+    async function loadAdminOverview(){
+      const headers = getAuthHeaders();
+      const wrap = document.getElementById('adminOverviewChartWrap');
+      const empty = document.getElementById('adminOverviewEmpty');
+      const canvas = document.getElementById('adminOverviewPie');
+      if(!wrap || !empty || !canvas) return;
+
+      if(!headers){ wrap.style.display='none'; empty.style.display='flex'; return; }
+
+      try{
+        const res = await fetch(`${API_BASE_URL}/api/protected/queries`, { headers });
+        if(!res.ok){ wrap.style.display='none'; empty.style.display='flex'; return; }
+        const data = await res.json();
+        const norm = v => typeof v === 'string' ? v.trim().toLowerCase() : '';
+        const legit = Array.isArray(data) ? data.filter(q => norm(q.result) === 'legit').length : 0;
+        const fake  = Array.isArray(data) ? data.filter(q => norm(q.result) === 'fake').length  : 0;
+        const total = legit + fake;
+        if(!total){ wrap.style.display='none'; empty.style.display='flex'; return; }
+        empty.style.display='none'; wrap.style.display='block';
+
+        const ctx = canvas.getContext('2d');
+        if(adminOverviewChart) adminOverviewChart.destroy();
+        adminOverviewChart = new Chart(ctx, {
+          type:'pie',
+          data:{ labels:['Legit','Fake'], datasets:[{ data:[legit,fake], backgroundColor:['#00ff90','#ff6b6b'], borderColor:['#0a8f60','#a94444'], borderWidth:1 }] },
+          options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:'#e5e7eb' } } } }
+        });
+      }catch(err){ console.error(err); wrap.style.display='none'; empty.style.display='flex'; }
+    }
+
+    async function loadAllUsers(){
+      const tableBody=document.querySelector("#usersTable tbody");
+      tableBody.innerHTML="<tr><td colspan='5'>Loading...</td></tr>";
+      try{
+        const token=localStorage.getItem("token");
+        const res=await fetch(`${API_BASE_URL}/api/protected/users`,{headers:{"Authorization":`Bearer ${token}`}});
+        if(!res.ok) throw new Error("Failed");
+        const users=await res.json();
+        if(!users.length){ tableBody.innerHTML="<tr><td colspan='5'>No users found</td></tr>"; return; }
+        tableBody.innerHTML=users.map(u=>`
+          <tr>
+            <td><p style="color:black">${u.username}</p></td>
+            <td contenteditable="true" data-field="fullname"><p style="color:black">${u.fullname}</p></td>
+            <td contenteditable="true" data-field="email"><p style="color:black">${u.email}</p></td>
+            <td>${u.role}</td>
+            <td>
+              <button class="action-btn update-btn" onclick="updateUser('${u.username}',this)">💾 Save</button>
+              <button class="action-btn delete-btn" onclick="deleteUser('${u.username}',this)">🗑️ Delete</button>
+            </td>
+          </tr>
+        `).join("");
+      }catch(err){ console.error(err); tableBody.innerHTML="<tr><td colspan='5'>Error loading users</td></tr>"; }
+    }
+
+    async function updateUser(username,btn){
+      const row=btn.closest("tr");
+      const fullname=row.querySelector("[data-field='fullname']").textContent;
+      const email=row.querySelector("[data-field='email']").textContent;
+      const token=localStorage.getItem("token");
+      try{
+        const res=await fetch(`${API_BASE_URL}/api/protected/users/${username}` ,{
+          method:"PUT",
+          headers:{"Authorization":`Bearer ${token}`,"Content-Type":"application/json"},
+          body:JSON.stringify({fullname,email})
+        });
+        if(!res.ok) throw new Error("Failed");
+        alert("User updated successfully!");
+      }catch(err){ console.error(err); alert("Error updating user"); }
+    }
+
+    async function deleteUser(username,btn){
+      if(!confirm(`Are you sure you want to delete ${username}?`)) return;
+      const token=localStorage.getItem("token");
+      try{
+        const res=await fetch(`${API_BASE_URL}/api/protected/users/${username}` ,{
+          method:"DELETE",
+          headers:{"Authorization":`Bearer ${token}`}
+        });
+        if(!res.ok) throw new Error("Failed");
+        btn.closest("tr").remove();
+        alert("User deleted successfully!");
+      }catch(err){ console.error(err); alert("Error deleting user"); }
+    }
+
+    async function loadAllQueries(){
+      const tableBody=document.querySelector("#queriesTable tbody");
+      tableBody.innerHTML="<tr><td colspan='5'>Loading...</td></tr>";
+      try{
+        const token=localStorage.getItem("token");
+        const res=await fetch(`${API_BASE_URL}/api/protected/queries`,{headers:{"Authorization":`Bearer ${token}`}});
+        if(!res.ok) throw new Error("Failed");
+        const data=await res.json();
+        if(!data.length){ tableBody.innerHTML="<tr><td colspan='5'>No queries found</td></tr>"; return; }
+        tableBody.innerHTML=data.map(q=>`
+          <tr>
+            <td><p style="color:black">${q.username||"N/A"}</p></td>
+            <td><p style="color:black">${q.fullname||"N/A"}</p></td>
+            <td><p style="color:black">${q.website||"N/A"}</p></td>
+            <td><p style="color:black">${q.result||"N/A"}</p></td>
+            <td><p style="color:black">${new Date(q.timestamp).toLocaleString()}</p></td>
+          </tr>
+        `).join("");
+      }catch(err){ console.error(err); tableBody.innerHTML="<tr><td colspan='5'>Error loading data</td></tr>"; }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { loadAdminOverview(); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Malicious URL Detector — User Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Top Buttons — same as index.html style */
+
+    /* Ensure body can scroll */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background-color: #000;
+  color: #fff;
+  overflow-x: hidden;  /* prevent horizontal scroll */
+  overflow-y: auto;    /* allow vertical scroll */
+  min-height: 100vh;
+}
+
+/* Restore vertical scroll without changing previous layout */
+html, body {
+  overflow-y: auto !important;
+}
+
+/* Center container (search + title) */
+.center-container {
+  text-align: center;
+  margin-top: 1rem;
+  padding: 1rem;
+  position: static;      /* participate in normal flow */
+  transform: none;       /* reset absolute-centering from global */
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1.5rem;
+  z-index: 2;
+}
+
+/* Keep background pulse behind content and non-interactive */
+.radar {
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Dashboard container should allow scrolling if content is long */
+.dashboard-container {
+  display: none; /* initially hidden */
+  width: 80%;
+  max-width: 1000px;
+  margin: 2rem auto;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 1rem;
+  color: #fff;
+  overflow-y: auto;    /* enable vertical scroll */
+  max-height: 80vh;    /* prevent it from overflowing screen */
+}
+
+/* Tables: make scrollable horizontally if too wide */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  color: #fff;
+  overflow-x: auto;
+  display: block;
+}
+
+
+    .top-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 1rem 2rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .top-buttons button {
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      border: 1px solid #ff4c4c;
+      background: transparent;
+      cursor: pointer;
+      transition: 0.3s;
+      color: #ff4c4c;
+      font-weight: bold;
+    }
+
+    .top-buttons button:hover {
+      background: #ff4c4c;
+      color: #fff;
+    }
+
+    /* Dashboard Container */
+    .dashboard-container {
+      display: none; /* initially hidden */
+      width: 80%;
+      max-width: 1000px;
+      margin: 2rem auto;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 1rem;
+      color: #fff;
+    }
+
+    /* Tabs inside dashboard */
+    .tab-buttons {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+
+    h1 {
+  text-align: center;
+  margin-top: 8%;
+  font-size: 3em;
+  color: #ff4c4c;
+}
+
+
+    .tab-buttons button {
+      flex: 1;
+      padding: 0.5rem 0;
+      border: none;
+      background: transparent;
+      color: #ccc;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .tab-buttons button.active {
+      color: #ff4c4c;
+      border-bottom: 3px solid #ff4c4c;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 1rem 0;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      color: #fff;
+    }
+
+    th, td {
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 0.5rem;
+      text-align: center;
+    }
+
+    th {
+      background: rgba(255,76,76,0.5);
+    }
+
+    tr:nth-child(even) {
+      background: rgba(255,255,255,0.1);
+    }
+
+    input[type="text"], input[type="email"] {
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      width: 80%;
+      max-width: 400px;
+      border: 1px solid #ff4c4c;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+    }
+
+    button.action-btn {
+      background: #ff4c4c;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    button.action-btn:hover {
+      background: #cc3a3a;
+    }
+
+    #checkResult, #updateMsg {
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #00ffb7;
+    }
+    
+    /* Page-level scrolling only: disable inner scrolling on dashboard */
+    .dashboard-container {
+      overflow: visible !important;
+      max-height: none !important;
+    }
+    /* Local override: smaller, static title (no typewriter) on this page */
+    body.landing .title {
+      width: auto;
+      white-space: normal;
+      border-right: none;
+      animation: none;
+      padding-right: 0;
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+    /* Wireframe layout */
+    .topbar {
+      position: sticky; top: 0; z-index: 5;
+      background: rgba(0,0,0,0.6);
+      padding: 12px 16px;
+      display: flex; align-items: center; justify-content: center;
+      border-bottom: 2px solid #2b2f3a; /* thicker top divider */
+    }
+    .topbar .back-btn {
+      position: absolute; right: 16px;
+      padding: 8px 14px; border-radius: 6px; border: 1px solid #2b2f3a;
+      background: #0b1220; color: #fff; cursor: pointer;
+    }
+    .dash-layout {
+      display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; align-items: start;
+      width: 100%;
+      max-width: none;
+      margin: 12px 0 0 0; /* align to far left */
+      padding: 0; /* no inner padding so sidebar hugs left */
+    }
+    .sidebar {
+      background: transparent; border-right: 0; border-radius: 0;
+      padding: 12px 10px 12px 6px; /* hug left */
+    }
+    .sidebar h3 { margin: 0 0 12px; font-size: 1.2rem; }
+    .sidebar .nav-parent { display:flex; align-items:center; gap:8px; justify-content:flex-start; padding:10px 14px; cursor:pointer; margin-bottom:8px; background:#007bff; color:#fff; border:0; border-radius:25px; }
+    .sidebar .nav-parent:hover { background:#00c6ff; }
+    .sidebar .nav-parent svg { width:18px; height:14px; flex: 0 0 auto; }
+    .sidebar .submenu { list-style:none; margin:0 0 8px 0; padding: 6px 0 6px 0; border-left: 0; display:none; }
+    .sidebar .submenu.open { display:block; }
+    .sidebar .submenu .nav-item { display:block; margin:6px 0; cursor:pointer; padding:10px 14px; border-radius:25px; background:#333; color:#fff; border:0; text-align:left; }
+    .sidebar .submenu .nav-item:hover { background:#555; }
+    .sidebar .nav-item.active { outline: 2px solid rgba(255,255,255,0.15); }
+    .content { background:transparent; border-radius:0; padding:24px; box-shadow: none; min-height: 70vh; align-self: start; margin-top: 48px; }
+    /* Overview layout */
+    #overview { display: flex; flex-direction: column; gap: 16px; }
+    #overview p { margin-bottom: 8px; }
+    #overviewChartWrap {
+      margin-top: 36px;
+      max-width: 520px;
+      height: 320px;
+      margin-left: auto; margin-right: auto;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    /* Override global canvas positioning used for globe so chart stays in its card */
+    #overviewChartWrap canvas {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      z-index: 1 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+    @media (max-width: 900px) {
+      #overviewChartWrap { max-width: 90vw; height: 280px; }
+    }
+
+    /* Responsive: stack on small screens */
+    @media (max-width: 900px) {
+      .dash-layout { grid-template-columns: 1fr; margin: 12px; }
+      .sidebar { border-right: 0; border-bottom: 2px solid #2b2f3a; border-radius: 8px; }
+    }
+  </style>
+</head>
+<body class="landing">
+  <!-- Top bar with centered title and right-aligned Back button -->
+  <div class="topbar">
+    <div class="title">MALICIOUS WEBSITE DETECTOR</div>
+    <button class="back-btn" onclick="window.location='dashboard.html'">Back</button>
+  </div>
+  <!-- <div class="warning-icon">⚠</div>
+  <div class="warning-icon">🔒</div>
+  <div class="warning-icon">❌</div> -->
+
+  <!-- Dashboard layout -->
+  <div class="dash-layout" id="dashboardContainer">
+    <aside class="sidebar">
+      <button class="nav-parent" id="dashToggle" aria-expanded="true" onclick="toggleSubmenu()">
+        <svg viewBox="0 0 24 16" aria-hidden="true">
+          <rect x="2" y="2" width="20" height="2" fill="#ffffff"/>
+          <rect x="2" y="7" width="20" height="2" fill="#ffffff"/>
+          <rect x="2" y="12" width="20" height="2" fill="#ffffff"/>
+        </svg>
+        <span>Dashboard</span>
+      </button>
+      <ul class="submenu open" id="dashSubmenu">
+        <li><button class="nav-item active" onclick="openSection('overview', this)">Overview</button></li>
+        <li><button class="nav-item" onclick="openSection('activity', this)">Activity</button></li>
+      </ul>
+    </aside>
+    <main class="content">
+      <section id="overview" class="section active">
+        <h2>Welcome, <span id="userName"></span> 👋</h2>
+        <p>Monitor your recent checks and activity here.</p>
+        <div id="overviewEmpty" style="height: 40vh; display:flex; align-items:center; justify-content:center; color:#9ca3af; text-align:center;">You haven't searched for anything</div>
+        <div id="overviewChartWrap" style="height: 40vh; display:none;">
+          <canvas id="overviewPieChart"></canvas>
+        </div>
+      </section>
+      <section id="activity" class="section" style="display:none;">
+        <h2>📝 Activity Logs</h2>
+        <table id="userActivityTable" style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th style="border:1px solid #2b2f3a; background:#0b1220; padding:10px; text-align:left;">Website</th>
+              <th style="border:1px solid #2b2f3a; background:#0b1220; padding:10px; text-align:left;">Result</th>
+              <th style="border:1px solid #2b2f3a; background:#0b1220; padding:10px; text-align:left;">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="3" style="padding:10px; color:#9ca3af;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:5000'
+      : 'https://your-app-name.onrender.com';
+    // Toggle submenu open/close
+    function toggleSubmenu() {
+      const btn = document.getElementById('dashToggle');
+      const menu = document.getElementById('dashSubmenu');
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!expanded));
+      if (expanded) { menu.classList.remove('open'); } else { menu.classList.add('open'); }
+    }
+
+    // Show main tabs
+    function showTab(tabId) {
+      document.querySelectorAll("#dashboardContainer .tab-content").forEach(tab => tab.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+    }
+
+    // Sidebar navigation
+    function openSection(id, el) {
+      // toggle content
+      document.querySelectorAll('.content .section').forEach(s => {
+        s.style.display = (s.id === id) ? 'block' : 'none';
+        s.classList.toggle('active', s.id === id);
+      });
+      // toggle sidebar active state
+      document.querySelectorAll('.sidebar .nav-item').forEach(a => a.classList.remove('active'));
+      if (el) el.classList.add('active');
+
+      if (id === 'activity') loadUserActivity();
+      if (id === 'overview') loadOverview();
+    }
+
+    // Auth header helper
+    function getAuthHeaders() {
+      const token = localStorage.getItem("token");
+      if (!token) { return null; }
+      return {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      };
+    }
+
+    // Load profile
+    async function loadUserProfile() {
+      const headers = getAuthHeaders();
+      // Set a quick fallback name from localStorage immediately
+      const nameSpanQuick = document.getElementById("userName");
+      if (nameSpanQuick && !nameSpanQuick.textContent) {
+        nameSpanQuick.textContent = localStorage.getItem('username') || 'User';
+      }
+      if (!headers) return; // allow UI without data when logged out
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/auth/user/profile`, { headers });
+        const data = await res.json();
+        if (!res.ok) return console.error(data);
+
+        const fullEl = document.getElementById("fullname");
+        if (fullEl) fullEl.value = data.fullname || "";
+        const emailEl = document.getElementById("email");
+        if (emailEl) emailEl.value = data.email || "";
+        const userEl = document.getElementById("username");
+        if (userEl) userEl.value = data.username || "";
+        const nameSpan = document.getElementById("userName");
+        if (nameSpan) nameSpan.textContent = data.username || localStorage.getItem('username') || "User";
+
+        // Ensure name is shown
+        document.getElementById("userName").textContent = data.username || "User";
+        // Default to Overview
+        openSection('overview');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function updateProfile() {
+      const headers = getAuthHeaders();
+      if (!headers) return;
+
+      const fullname = document.getElementById("fullname").value;
+      const email = document.getElementById("email").value;
+
+      const res = await fetch(`${API_BASE_URL}/api/auth/user/update`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ fullname, email })
+      });
+
+      const data = await res.json();
+      document.getElementById("updateMsg").textContent = data.message || data.error || "";
+      loadUserProfile();
+    }
+
+    // Basic URL validator
+    function isValidUrl(value) {
+      try {
+        const withProto = /^https?:\/\//i.test(value) ? value : `http://${value}`;
+        const u = new URL(withProto);
+        return !!u.hostname;
+      } catch { return false; }
+    }
+
+    async function checkWebsite(fromDashboard = false) {
+      const headers = getAuthHeaders();
+      if (!headers) return;
+
+      const inputId = fromDashboard ? "dashboardWebsiteInput" : "websiteInput";
+      const resultId = "checkResult";
+      const inputEl = document.getElementById(inputId);
+      const resultEl = document.getElementById(resultId);
+      const raw = (inputEl?.value || "").trim();
+      if (!raw) { alert("Enter a website URL"); return; }
+      if (!isValidUrl(raw)) { alert("Please enter a valid URL (e.g., example.com or https://example.com)"); return; }
+
+      // UI: loading state
+      resultEl.style.color = "#aaa";
+      resultEl.textContent = "Predicting...";
+
+      try {
+        const resp = await fetch(`${API_BASE_URL}/api/query/predict`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ website: raw })
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          resultEl.style.color = "#ff6b6b";
+          resultEl.textContent = data.error || "Prediction failed";
+          return;
+        }
+        // Show final decision prominently
+        const isFake = String(data.result).toLowerCase() === 'fake' || Number(data.label) === 1;
+        resultEl.style.color = isFake ? "#ff6b6b" : "#00ff90";
+        resultEl.textContent = `Result: ${isFake ? 'Fake' : 'Legit'}`;
+
+        // Log the query with the model's result (server already logs in predict, but keep best-effort)
+        try { await fetch(`${API_BASE_URL}/api/query/add`, { method: "POST", headers, body: JSON.stringify({ website: raw, result: isFake ? 'Fake' : 'Legit' }) }); } catch (e) { console.error(e); }
+
+        loadUserActivity();
+        loadOverview();
+      } catch (e) {
+        console.error(e);
+        resultEl.style.color = "#ff6b6b";
+        resultEl.textContent = "Network error";
+      }
+    }
+
+
+    async function loadUserActivity() {
+      const headers = getAuthHeaders();
+      if (!headers) return;
+
+      const res = await fetch(`${API_BASE_URL}/api/query/user`, { headers });
+      const data = await res.json();
+
+      const tbody = document.querySelector("#userActivityTable tbody");
+      if (!data || data.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='3'>No activity found</td></tr>";
+        return;
+      }
+
+      tbody.innerHTML = data.map(q => `
+        <tr>
+          <td>${q.website}</td>
+          <td>${q.result}</td>
+          <td>${q.timestamp ? new Date(q.timestamp).toLocaleString() : ''}</td>
+        </tr>
+      `).join("");
+    }
+
+    // ---------------- Overview Pie Chart ---------------- //
+    let overviewChart = null;
+    async function loadOverview() {
+      try {
+        const headers = getAuthHeaders();
+        const emptyEl = document.getElementById('overviewEmpty');
+        const wrapEl = document.getElementById('overviewChartWrap');
+        const canvas = document.getElementById('overviewPieChart');
+        if (!emptyEl || !wrapEl || !canvas) return;
+
+        if (!headers) {
+          // No auth → show empty state
+          wrapEl.style.display = 'none';
+          emptyEl.style.display = 'flex';
+          return;
+        }
+
+        const res = await fetch(`${API_BASE_URL}/api/query/user`, { headers });
+        if (!res.ok) {
+          // Unauthorized or server error → show empty state
+          wrapEl.style.display = 'none';
+          emptyEl.style.display = 'flex';
+          return;
+        }
+        const data = await res.json();
+
+        const norm = (v) => (typeof v === 'string' ? v.trim().toLowerCase() : '');
+        const legit = Array.isArray(data) ? data.filter(d => norm(d.result) === 'legit').length : 0;
+        const fake  = Array.isArray(data) ? data.filter(d => norm(d.result) === 'fake').length  : 0;
+        const total = legit + fake;
+
+        if (!total) {
+          wrapEl.style.display = 'none';
+          emptyEl.style.display = 'flex';
+          return;
+        }
+
+        emptyEl.style.display = 'none';
+        wrapEl.style.display = 'block';
+
+        const ctx = canvas.getContext('2d');
+        const chartData = {
+          labels: ['Legit', 'Fake'],
+          datasets: [{
+            data: [legit, fake],
+            backgroundColor: ['#00ff90', '#ff6b6b'],
+            borderColor: ['#0a8f60', '#a94444'],
+            borderWidth: 1
+          }]
+        };
+        const options = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#e5e7eb' } } }
+        };
+
+        if (overviewChart) { overviewChart.destroy(); }
+        overviewChart = new Chart(ctx, { type: 'pie', data: chartData, options });
+      } catch (e) {
+        console.error(e);
+        const emptyEl = document.getElementById('overviewEmpty');
+        const wrapEl = document.getElementById('overviewChartWrap');
+        if (wrapEl) wrapEl.style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'flex';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      window.location.href = "index.html";
+    }
+
+    // Support Enter key on both inputs
+    document.addEventListener("DOMContentLoaded", () => {
+      ["websiteInput", "dashboardWebsiteInput"].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            checkWebsite(id === "dashboardWebsiteInput");
+          }
+        });
+      });
+    });
+
+    // Initialize default UI
+    document.addEventListener('DOMContentLoaded', () => {
+      // open Overview by default
+      openSection('overview');
+      // set fallback name from localStorage if present
+      const nameSpan = document.getElementById('userName');
+      if (nameSpan) nameSpan.textContent = localStorage.getItem('username') || nameSpan.textContent || 'User';
+      // try loading profile (silently fails if no token)
+      loadUserProfile();
+      // draw initial overview state
+      loadOverview();
+    });
+  </script>
+</body>
+</html>

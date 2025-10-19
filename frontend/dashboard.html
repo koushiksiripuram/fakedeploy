@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Malicious Website Detector</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Page-local override to prevent title clipping (wider than char count for uppercase glyphs) */
+    .title { width: 32ch; padding-right: 1ch; animation: typing26 2.6s steps(26, end) forwards, blink 0.8s infinite; }
+    @keyframes typing26 { from { width: 0; } to { width: 32ch; } }
+    @media (max-width: 768px) {
+      .title { width: 32.6ch; padding-right: 1ch; }
+    }
+  </style>
+</head>
+<body class="landing">
+  <div class="top-buttons">
+    <button onclick="window.location='userdashboardnew.html'" class="login-btn">Dashboard</button>
+    <button onclick="window.location='profile.html'" class="signup-btn">Profile</button>
+    <button onclick="window.location='index.html'" class="signup-btn">Logout</button>
+    
+  </div>
+
+  <div class="center-container">
+    <div class="title">MALICIOUS WEBSITE DETECTOR</div>
+    <div class="search-container">
+      <input type="text" id="landingWebsiteInput" placeholder="Enter website URL" />
+      <button type="button" aria-label="Check website" onclick="landingCheckWebsite()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+          <line x1="16.65" y1="16.65" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <p id="landingCheckResult"></p>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    // Load three.js only on large screens to keep mobile light
+    (function loadThreeForDesktop(){
+      if (window.innerWidth >= 992) {
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+        s.onload = function(){ if (window.initGlobeIfAvailable) window.initGlobeIfAvailable(); };
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+    <!-- <h1 style="text-align:center; margin-top:15%; font-size:3em; color:#ff4c4c;">
+        Fake Website Detection 
+    </h1> -->
+
+    <!-- Floating Warning Icons
+    <div class="warning-icon">⚠</div>
+    <div class="warning-icon">🔒</div>
+    <div class="warning-icon">❌</div> -->
+
+    <footer>
+       &copy; 2025 Fake Website Detector | All Rights Reserved
+    </footer>
+  <script>
+    // Basic URL validator (same behavior as dashboard)
+    function isValidUrl(value) {
+      try {
+        const withProto = /^https?:\/\//i.test(value) ? value : `http://${value}`;
+        const u = new URL(withProto);
+        return !!u.hostname;
+      } catch { return false; }
+    }
+
+    // Try to build auth headers if token is present (optional on landing)
+    function getAuthHeaders() {
+      const token = localStorage.getItem('token');
+      if (!token) return null;
+      return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+    }
+
+    async function landingCheckWebsite() {
+      const input = document.getElementById('landingWebsiteInput');
+      const resultEl = document.getElementById('landingCheckResult');
+      const raw = (input?.value || '').trim();
+      if (!raw) { alert('Enter a website URL'); return; }
+      if (!isValidUrl(raw)) { alert('Please enter a valid URL (e.g., example.com or https://example.com)'); return; }
+
+      // Loading state
+      resultEl.style.color = '#aaa';
+      resultEl.textContent = 'Predicting...';
+
+      try {
+        const resp = await fetch(`${API_BASE_URL}/api/query/predict_public`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ website: raw })
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          resultEl.style.color = '#ff6b6b';
+          resultEl.textContent = data.error || 'Prediction failed';
+          return;
+        }
+        // Show final decision
+        const isFake = String(data.result).toLowerCase() === 'fake' || Number(data.label) === 1;
+        resultEl.style.color = isFake ? '#ff6b6b' : '#00ff90';
+        resultEl.textContent = `Result: ${isFake ? 'Fake' : 'Legit'}`;
+      } catch (e) {
+        console.error(e);
+        resultEl.style.color = '#ff6b6b';
+        resultEl.textContent = 'Network error';
+      }
+    }
+
+    // Enter key support
+    document.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('landingWebsiteInput');
+      if (el) {
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            landingCheckWebsite();
+          }
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>
+
