@@ -97,7 +97,7 @@
   <script>
     const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:5000'
-      : 'https://your-app-name.onrender.com';
+      : 'https://fakedeploy.onrender.com';
     function getAuthHeaders(){
       const token = localStorage.getItem('token');
       if(!token) return null;
