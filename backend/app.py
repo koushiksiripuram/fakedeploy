@@ -24,6 +24,8 @@ app.register_blueprint(query_bp, url_prefix="/api/query")
 ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",
     "http://localhost:5500",
+    "https://fakedeploy.onrender.com",  # Add your Render URL
+    "http://fakedeploy.onrender.com",   # Add HTTP version too
 ]
 PROD_ORIGIN = os.getenv("FRONTEND_ORIGIN")
 if PROD_ORIGIN and PROD_ORIGIN not in ALLOWED_ORIGINS:
