@@ -72,6 +72,51 @@ def debug_files():
         "model_exists": "model.pkl" in backend_files,
         "current_directory": os.path.dirname(__file__)
     })
+
+@app.route('/api/debug/model-status')
+def model_status():
+    try:
+        from model_infer import _model, MODEL_PATH
+        import os
+        
+        status = {
+            "model_file_exists": os.path.exists(MODEL_PATH),
+            "model_loaded": _model is not None,
+            "model_type": str(type(_model)) if _model is not None else "None",
+            "model_path": MODEL_PATH,
+            "backend_files": os.listdir(os.path.dirname(__file__))
+        }
+        
+        # Try to test if model can make a prediction
+        if _model is not None:
+            try:
+                # Test with dummy features
+                test_features = {feature: 0 for feature in [
+                    "having_IP_Address", "URL_Length", "Shortining_Service", "having_At_Symbol",
+                    "double_slash_redirecting", "Prefix_Suffix", "having_Sub_Domain", "SSLfinal_State",
+                    "Domain_registeration_length", "Favicon", "port", "HTTPS_token", "Request_URL",
+                    "URL_of_Anchor", "Links_in_tags", "SFH", "Submitting_to_email", "Abnormal_URL",
+                    "Redirect", "on_mouseover", "RightClick", "popUpWidnow", "Iframe", "age_of_domain",
+                    "DNSRecord", "web_traffic", "Page_Rank", "Google_Index", "Links_pointing_to_page",
+                    "Statistical_report"
+                ]}
+                from model_infer import predict as model_predict
+                test_result = model_predict(test_features)
+                status["prediction_test"] = "success"
+                status["test_prediction"] = test_result
+            except Exception as e:
+                status["prediction_test"] = "failed"
+                status["prediction_error"] = str(e)
+        else:
+            status["prediction_test"] = "not_attempted"
+            status["prediction_error"] = "Model not loaded"
+            
+        return jsonify(status)
+        
+    except Exception as e:
+        return jsonify({
+            "error": f"Failed to check model status: {str(e)}"
+        }), 500
 # ---------------- Run Server ---------------- #
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
