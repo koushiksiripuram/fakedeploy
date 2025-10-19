@@ -6,7 +6,6 @@ import numpy as np
 
 # Adjust this path if you place the model elsewhere
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "model.pkl")
-SCALER_PATH = os.path.join(os.path.dirname(__file__), "scaler.pkl")
 
 # IMPORTANT: Must match training feature order EXACTLY
 FEATURES_IN_ORDER: List[str] = [
@@ -43,24 +42,22 @@ FEATURES_IN_ORDER: List[str] = [
 ]
 
 _model = None
-_scaler = None
-
 
 def _load_pickle(path: str):
     with open(path, "rb") as f:
         return pickle.load(f)
 
-
-# Load model/scaler at import time (fail gracefully if missing)
 try:
     if os.path.exists(MODEL_PATH):
         _model = _load_pickle(MODEL_PATH)
-    if os.path.exists(SCALER_PATH):
-        _scaler = _load_pickle(SCALER_PATH)
+        print("✅ Model loaded successfully!")
+    else:
+        print("❌ Model file not found!")
+        
 except Exception as e:
-    # Keep None; routes will handle missing model error
+    print(f"❌ Error loading model: {e}")
     _model = None
-    _scaler = None
+# Load model/scaler at import time (fail gracefully if missing)
 
 
 def _to_row(features: Dict[str, float]) -> np.ndarray:
@@ -73,22 +70,35 @@ def _to_row(features: Dict[str, float]) -> np.ndarray:
             v = 0.0
         row.append(v)
     X = np.array(row, dtype=float).reshape(1, -1)
-    if _scaler is not None:
-        try:
-            X = _scaler.transform(X)
-        except Exception:
-            # ignore scaler failure, use unscaled
-            pass
     return X
 
 
+
 def predict(features: Dict[str, float]) -> int:
+    print(f"🎯 Starting prediction with features: {list(features.keys())}")
+    
     if _model is None:
-        raise RuntimeError("model.pkl not found or failed to load")
-    X = _to_row(features)
-    y = _model.predict(X)
-    # y could be array([1]) or probabilities depending on model; assume class labels
+        error_msg = "model.pkl not found or failed to load"
+        print(f"❌ {error_msg}")
+        raise RuntimeError(error_msg)
+        
     try:
-        return int(y[0])
-    except Exception:
-        return int(y)
+        X = _to_row(features)
+        print(f"📊 Processed input shape: {X.shape}")
+        
+        y = _model.predict(X)
+        print(f"🎯 Raw prediction result: {y}")
+        
+        # y could be array([1]) or probabilities depending on model; assume class labels
+        try:
+            result = int(y[0])
+            print(f"✅ Final prediction: {result}")
+            return result
+        except Exception:
+            result = int(y)
+            print(f"✅ Final prediction (fallback): {result}")
+            return result
+            
+    except Exception as e:
+        print(f"❌ Prediction error: {e}")
+        raise RuntimeError(f"Prediction failed: {str(e)}")
