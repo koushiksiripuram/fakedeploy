@@ -63,7 +63,15 @@ def missing_token_callback(reason):
 def expired_token_callback(jwt_header, jwt_payload):
     print("❌ Token expired")
     return jsonify({"error": "Token expired"}), 401
-
+@app.route('/api/debug/files')
+def debug_files():
+    import os
+    backend_files = os.listdir(os.path.dirname(__file__))
+    return jsonify({
+        "backend_files": backend_files,
+        "model_exists": "model.pkl" in backend_files,
+        "current_directory": os.path.dirname(__file__)
+    })
 # ---------------- Run Server ---------------- #
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
