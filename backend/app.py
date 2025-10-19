@@ -117,6 +117,24 @@ def model_status():
         return jsonify({
             "error": f"Failed to check model status: {str(e)}"
         }), 500
+@app.route('/api/debug/dependencies')
+def check_dependencies():
+    try:
+        import numpy as np
+        import sys
+        
+        # Check if _core exists
+        has_core = hasattr(np, '_core')
+        
+        return jsonify({
+            "python_version": sys.version,
+            "numpy_version": np.__version__,
+            "has_numpy_core": has_core,
+            "numpy_path": np.__file__,
+            "available_attributes": [attr for attr in dir(np) if 'core' in attr.lower()]
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
 # ---------------- Run Server ---------------- #
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
