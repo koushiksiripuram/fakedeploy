@@ -10,3 +10,5 @@ requests==2.32.5
 whois==1.20240129.2
 gunicorn==21.2.0
 Werkzeug==2.3.7
+setuptools==69.5.1
+wheel==0.43.0
