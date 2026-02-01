@@ -25,4 +25,5 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v6.0.0
       with:
-        name: report
+        name: pylint-report
+        path: report.json
