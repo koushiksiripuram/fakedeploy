@@ -22,6 +22,7 @@ jobs:
       run: |
         pylint $(git ls-files '*.py') -f json --output=report.json
     - name: Upload Artifact
+      if: always()
       uses: actions/upload-artifact@v6.0.0
       with:
         name: report
